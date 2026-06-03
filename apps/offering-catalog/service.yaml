@@ -1,0 +1,18 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: offering-catalog
+  namespace: apps
+  labels:
+    app: offering-catalog
+    env: exp
+spec:
+  type: ClusterIP
+  selector:
+    app: offering-catalog
+    env: exp
+  ports:
+    - port: 3027
+      targetPort: 3027
+      protocol: TCP

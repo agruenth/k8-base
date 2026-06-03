@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: learning-games
+  namespace: apps
+  labels:
+    app: learning-games
+spec:
+  type: ClusterIP
+  selector:
+    app: learning-games
+  ports:
+    - port: 3025
+      targetPort: 3025
+      protocol: TCP

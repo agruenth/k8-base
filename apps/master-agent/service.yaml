@@ -1,0 +1,22 @@
+# Master Agent ClusterIP Service
+# Exposes only the frontend port (3004) to the cluster.
+# The backend sidecar (5001) is accessed internally via localhost within the pod.
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: master-agent
+  namespace: apps
+  labels:
+    app: master-agent
+    env: exp
+spec:
+  type: ClusterIP
+  selector:
+    app: master-agent
+    env: exp
+  ports:
+    - name: frontend
+      port: 3004
+      targetPort: 3004
+      protocol: TCP

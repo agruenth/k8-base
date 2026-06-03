@@ -1,0 +1,18 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: agent-onboarding-checklist
+  namespace: apps
+  labels:
+    app: agent-onboarding-checklist
+    env: exp
+spec:
+  type: ClusterIP
+  selector:
+    app: agent-onboarding-checklist
+    env: exp
+  ports:
+    - port: 3023
+      targetPort: 3023
+      protocol: TCP

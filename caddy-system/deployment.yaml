@@ -1,0 +1,76 @@
+# Caddy Reverse Proxy Deployment
+# Serves as the single entry point for all traffic.
+# Mounts the Caddyfile from a ConfigMap.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: caddy
+  namespace: caddy-system
+  labels:
+    app: caddy
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: caddy
+  template:
+    metadata:
+      labels:
+        app: caddy
+    spec:
+      containers:
+        - name: caddy
+          image: registry.localhost:5000/caddy-custom:latest
+          imagePullPolicy: Never
+          ports:
+            - name: https
+              containerPort: 443
+              hostPort: 443
+              protocol: TCP
+          volumeMounts:
+            - name: caddy-config
+              mountPath: /etc/caddy/Caddyfile
+              subPath: Caddyfile
+              readOnly: true
+            - name: caddy-data
+              mountPath: /data
+            - name: landing-page
+              mountPath: /srv/landing/index.html
+              subPath: index.html
+              readOnly: true
+            - name: tls-certs
+              mountPath: /tls
+              readOnly: true
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+          # TCP probes — HTTP probes fail because / redirects to HTTPS (3xx)
+          readinessProbe:
+            tcpSocket:
+              port: 443
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 443
+            initialDelaySeconds: 10
+            periodSeconds: 30
+      volumes:
+        - name: caddy-config
+          configMap:
+            name: caddy-config
+        - name: caddy-data
+          emptyDir: {}
+        - name: landing-page
+          configMap:
+            name: landing-page
+        - name: tls-certs
+          secret:
+            secretName: caddy-tls

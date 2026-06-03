@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mem-palace-obsidian-mcp
+  namespace: apps
+  labels:
+    app: mem-palace-obsidian-mcp
+    env: exp
+spec:
+  type: ClusterIP
+  selector:
+    app: mem-palace-obsidian-mcp
+  ports:
+    - port: 3029
+      targetPort: 3029
+      protocol: TCP

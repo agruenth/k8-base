@@ -1,0 +1,185 @@
+# Caddy Ingress ConfigMap
+# Routing: Caddy → forward_auth (Authelia sees original path) → strip prefix → reverse_proxy
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: caddy-config
+  namespace: caddy-system
+  labels:
+    app: caddy
+data:
+  Caddyfile: |
+    {
+      admin off
+      order forward_auth before uri
+    }
+
+    (authelia) {
+      forward_auth authelia.authelia.svc.cluster.local:9091 {
+        uri /authelia/api/authz/forward-auth
+        copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
+      }
+    }
+
+    # Reusable snippet: auth → strip prefix → proxy
+    (app_route) {
+      import authelia
+      uri strip_prefix {args[0]}
+      reverse_proxy {args[1]}
+    }
+
+    # Snippet for apps using Next.js basePath (no prefix stripping needed)
+    (app_route_basepath) {
+      import authelia
+      reverse_proxy {args[0]}
+    }
+
+    :443 {
+      tls /tls/tls.crt /tls/tls.key
+
+      log {
+        output stdout
+        format json
+        level INFO
+      }
+
+      # ── Rate limiting ────────────────────────────────────────
+      # Authelia auth API: brute-force protection on actual login/2FA endpoints only
+      # Static assets (/authelia/static/*, locales, manifest, favicon) are excluded
+      @authelia_api path /authelia/api/*
+      rate_limit @authelia_api {
+        zone authelia_zone {
+          key {remote_host}
+          events 20
+          window 1m
+        }
+      }
+
+      # Global per-IP limit: protects all backends from flood/scan abuse
+      rate_limit {
+        zone global_zone {
+          key {remote_host}
+          events 300
+          window 1m
+        }
+      }
+
+      header {
+        Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        X-XSS-Protection "1; mode=block"
+        -Server
+      }
+
+      handle /authelia* {
+        reverse_proxy authelia.authelia.svc.cluster.local:9091
+      }
+
+      handle / {
+        import authelia
+        header Remote-User {http.request.header.Remote-User}
+        file_server {
+          root /srv/landing
+        }
+      }
+
+      # ── Experimental apps (/exp/<app>) ──────────────────────
+      handle /exp/checkmate* {
+        import app_route /exp/checkmate checkmate.apps.svc.cluster.local:3000
+      }
+
+      handle /exp/wandermind* {
+        import app_route /exp/wandermind wandermind.apps.svc.cluster.local:3001
+      }
+
+      handle /exp/eden* {
+        import app_route /exp/eden eden.apps.svc.cluster.local:3002
+      }
+
+      handle /exp/requirement_helper* {
+        import app_route /exp/requirement_helper req-helper.apps.svc.cluster.local:3003
+      }
+
+      handle /exp/master-agent* {
+        import app_route /exp/master-agent master-agent.apps.svc.cluster.local:3004
+      }
+
+      handle /exp/ai-tooling* {
+        import app_route /exp/ai-tooling ai-tooling.apps.svc.cluster.local:3005
+      }
+
+      handle /exp/munchkin-td* {
+        import app_route /exp/munchkin-td munchkin-td.apps.svc.cluster.local:3006
+      }
+
+      handle /exp/citizen-dev* {
+        import app_route /exp/citizen-dev citizen-dev.apps.svc.cluster.local:3007
+      }
+
+      handle /exp/polisim* {
+        import app_route /exp/polisim polisim.apps.svc.cluster.local:3008
+      }
+
+      handle /exp/offering-agent* {
+        import app_route /exp/offering-agent offering-agent.apps.svc.cluster.local:3009
+      }
+
+      handle /exp/agentic-offering* {
+        import app_route /exp/agentic-offering agentic-offering.apps.svc.cluster.local:3020
+      }
+
+      handle /exp/profile* {
+        import app_route /exp/profile profile.apps.svc.cluster.local:3021
+      }
+
+      handle /exp/idea-maschine* {
+        import app_route /exp/idea-maschine idea-maschine.apps.svc.cluster.local:3022
+      }
+
+      handle /exp/agent-onboarding-checklist* {
+        import app_route /exp/agent-onboarding-checklist agent-onboarding-checklist.apps.svc.cluster.local:3023
+      }
+
+      handle /exp/learning-games* {
+        import app_route /exp/learning-games learning-games.apps.svc.cluster.local:3025
+      }
+
+      handle /exp/pensive* {
+        import app_route_basepath pensive.apps.svc.cluster.local:3026
+      }
+
+      handle /exp/offering-catalog* {
+        import app_route_basepath offering-catalog.apps.svc.cluster.local:3027
+      }
+
+      # ── Production apps (/prod/<app>) ──────────────────────
+      handle /prod/wandermind* {
+        import app_route /prod/wandermind wandermind-prod.apps.svc.cluster.local:3001
+      }
+
+      # ── Shared infrastructure (no env prefix) ─────────────
+      handle /grafana* {
+        import authelia
+        reverse_proxy grafana.logging.svc.cluster.local:80
+      }
+
+      handle /admin* {
+        import authelia
+        reverse_proxy admin-ui.apps.svc.cluster.local:3100
+      }
+
+      # ── Fallback for Next.js framework scripts without assetPrefix ──
+      # Next.js 16/Turbopack emits some <script> tags at /_next/static/*
+      # without the assetPrefix. Try all app backends — unique hashes mean
+      # only the correct app will respond 200.
+      handle /_next/* {
+        reverse_proxy learning-games.apps.svc.cluster.local:3025
+      }
+
+      handle {
+        respond "404 - Not Found" 404
+      }
+    }

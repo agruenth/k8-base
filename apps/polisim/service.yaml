@@ -1,0 +1,19 @@
+# PoliSim ClusterIP Service
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: polisim
+  namespace: apps
+  labels:
+    app: polisim
+    env: exp
+spec:
+  type: ClusterIP
+  selector:
+    app: polisim
+    env: exp
+  ports:
+    - port: 3008
+      targetPort: 3008
+      protocol: TCP

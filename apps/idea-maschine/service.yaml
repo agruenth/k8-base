@@ -1,0 +1,19 @@
+# Idea Maschine ClusterIP Service
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: idea-maschine
+  namespace: apps
+  labels:
+    app: idea-maschine
+    env: exp
+spec:
+  type: ClusterIP
+  selector:
+    app: idea-maschine
+    env: exp
+  ports:
+    - port: 3022
+      targetPort: 3022
+      protocol: TCP

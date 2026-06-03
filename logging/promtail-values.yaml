@@ -1,0 +1,70 @@
+# Helm values for Promtail (grafana/promtail chart)
+# Install: helm install promtail grafana/promtail -n logging -f promtail-values.yaml
+#
+# Collects container logs from /var/log/pods and ships to Loki.
+---
+config:
+  # Loki push endpoint within the cluster
+  clients:
+    - url: http://loki.logging.svc.cluster.local:3100/loki/api/v1/push
+
+  # Scrape config - standard Kubernetes pod log discovery
+  snippets:
+    scrapeConfigs: |
+      - job_name: kubernetes-pods
+        kubernetes_sd_configs:
+          - role: pod
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_node_name]
+            target_label: __host__
+          - action: drop
+            regex: ''
+            source_labels: [__meta_kubernetes_pod_uid]
+          - source_labels:
+              - __meta_kubernetes_pod_uid
+              - __meta_kubernetes_pod_container_name
+            target_label: __path__
+            separator: /
+            replacement: /var/log/pods/*$1/*.log
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            target_label: app
+          - source_labels: [__meta_kubernetes_namespace]
+            target_label: namespace
+          - source_labels: [__meta_kubernetes_pod_name]
+            target_label: pod
+          - source_labels: [__meta_kubernetes_pod_container_name]
+            target_label: container
+        pipeline_stages:
+          - cri: {}
+          - match:
+              selector: '{app="caddy"}'
+              stages:
+                - json:
+                    expressions:
+                      request_method: request.method
+                      request_uri: request.uri
+                      status: status
+                      remote_ip: request.client_ip
+                      duration: duration
+                - regex:
+                    expression: '^/(?P<service>[a-z][a-z0-9_-]*).*$'
+                    source: request_uri
+                - labels:
+                    status:
+                    request_method:
+                    service:
+
+# Host log paths are mounted by default by the chart - no extra mounts needed
+
+resources:
+  requests:
+    memory: "64Mi"
+    cpu: "50m"
+  limits:
+    memory: "128Mi"
+    cpu: "100m"
+
+# Run as DaemonSet on all nodes (default behavior)
+tolerations:
+  - effect: NoSchedule
+    operator: Exists

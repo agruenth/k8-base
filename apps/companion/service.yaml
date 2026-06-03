@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: pensive
+  namespace: apps
+  labels:
+    app: pensive
+spec:
+  type: ClusterIP
+  selector:
+    app: pensive
+  ports:
+    - port: 3026
+      targetPort: 3026
+      protocol: TCP

@@ -1,0 +1,19 @@
+# Wandermind ClusterIP Service
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wandermind
+  namespace: apps
+  labels:
+    app: wandermind
+    env: exp
+spec:
+  type: ClusterIP
+  selector:
+    app: wandermind
+    env: exp
+  ports:
+    - port: 3001
+      targetPort: 3001
+      protocol: TCP

@@ -1,0 +1,19 @@
+# Checkmate ClusterIP Service
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: checkmate
+  namespace: apps
+  labels:
+    app: checkmate
+    env: exp
+spec:
+  type: ClusterIP
+  selector:
+    app: checkmate
+    env: exp
+  ports:
+    - port: 3000
+      targetPort: 3000
+      protocol: TCP

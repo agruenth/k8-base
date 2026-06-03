@@ -1,0 +1,106 @@
+# Authelia Namespace + Deployment
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: authelia
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: authelia
+  namespace: authelia
+  labels:
+    app: authelia
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: authelia
+  template:
+    metadata:
+      labels:
+        app: authelia
+    spec:
+      enableServiceLinks: false
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+        - name: authelia
+          image: docker.io/authelia/authelia:4.39.16
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 9091
+          envFrom:
+            - secretRef:
+                name: authelia-secrets
+          volumeMounts:
+            - name: config
+              mountPath: /config/configuration.yml
+              subPath: configuration.yaml
+            - name: users
+              mountPath: /config/users.yaml
+              subPath: users.yaml
+            - name: data
+              mountPath: /data
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+          readinessProbe:
+            httpGet:
+              port: 9091
+              path: /authelia/api/health
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              port: 9091
+              path: /authelia/api/health
+            initialDelaySeconds: 30
+            periodSeconds: 30
+      volumes:
+        - name: config
+          configMap:
+            name: authelia-config
+        - name: users
+          configMap:
+            name: authelia-users
+        - name: data
+          persistentVolumeClaim:
+            claimName: authelia-data
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: authelia-data
+  namespace: authelia
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: authelia
+  namespace: authelia
+  labels:
+    app: authelia
+spec:
+  type: ClusterIP
+  selector:
+    app: authelia
+  ports:
+    - port: 9091
+      targetPort: 9091
+      protocol: TCP

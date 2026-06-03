@@ -1,0 +1,48 @@
+# AI Tooling Deployment
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-tooling
+  namespace: apps
+  labels:
+    app: ai-tooling
+    env: exp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ai-tooling
+      env: exp
+  template:
+    metadata:
+      labels:
+        app: ai-tooling
+        env: exp
+    spec:
+      containers:
+        - name: ai-tooling
+          imagePullPolicy: Never
+          image: registry.localhost:5000/ai-tooling:latest
+          ports:
+            - containerPort: 3005
+              protocol: TCP
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "20m"
+            limits:
+              memory: "192Mi"
+              cpu: "200m"
+          readinessProbe:
+            httpGet:
+              port: 3005
+              path: /
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              port: 3005
+              path: /
+            initialDelaySeconds: 10
+            periodSeconds: 30

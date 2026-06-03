@@ -1,0 +1,19 @@
+# Requirement Helper ClusterIP Service
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: req-helper
+  namespace: apps
+  labels:
+    app: req-helper
+    env: exp
+spec:
+  type: ClusterIP
+  selector:
+    app: req-helper
+    env: exp
+  ports:
+    - port: 3003
+      targetPort: 3003
+      protocol: TCP

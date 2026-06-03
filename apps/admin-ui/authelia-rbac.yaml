@@ -1,0 +1,24 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: admin-ui-authelia-role
+  namespace: authelia
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "patch", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: admin-ui-authelia-binding
+  namespace: authelia
+subjects:
+  - kind: ServiceAccount
+    name: admin-ui
+    namespace: apps
+roleRef:
+  kind: Role
+  name: admin-ui-authelia-role
+  apiGroup: rbac.authorization.k8s.io

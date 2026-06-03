@@ -1,0 +1,72 @@
+# Requirement Helper Deployment
+# Single-replica app with SQLite persistence.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: req-helper
+  namespace: apps
+  labels:
+    app: req-helper
+    env: exp
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: req-helper
+      env: exp
+  template:
+    metadata:
+      labels:
+        app: req-helper
+        env: exp
+    spec:
+      initContainers:
+        - name: init-db
+          image: registry.localhost:5000/req-helper:latest
+          imagePullPolicy: Never
+          command: ["sh", "-c", "cd /app && npx prisma db push --url 'file:./data/dev.db' --accept-data-loss 2>&1 || true"]
+          env:
+            - name: DATABASE_URL
+              value: "file://dev.db"
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+      containers:
+        - name: req-helper
+          image: registry.localhost:5000/req-helper:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 3003
+              protocol: TCP
+          env:
+            - name: DATABASE_URL
+              value: "file://dev.db"
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "20m"
+            limits:
+              memory: "192Mi"
+              cpu: "200m"
+          readinessProbe:
+            httpGet:
+              port: 3003
+              path: /
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              port: 3003
+              path: /
+            initialDelaySeconds: 10
+            periodSeconds: 30
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: req-helper-data

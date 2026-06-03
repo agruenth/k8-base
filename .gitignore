@@ -1,0 +1,13 @@
+# Real secrets — never commit
+caddy-system/secrets.yaml
+authelia/secrets.yaml
+apps/secrets.yaml
+
+# TLS material
+*.pem
+*.key
+*.crt
+
+# Node
+node_modules/
+.next/

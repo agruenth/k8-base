@@ -1,0 +1,21 @@
+# Citizen Dev ClusterIP Service
+# Exposes port 3007 externally, targeting the publish-portal container on 8083.
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: citizen-dev
+  namespace: apps
+  labels:
+    app: citizen-dev
+    env: exp
+spec:
+  type: ClusterIP
+  selector:
+    app: citizen-dev
+    env: exp
+  ports:
+    - name: portal
+      port: 3007
+      targetPort: 8083
+      protocol: TCP

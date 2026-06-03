@@ -1,0 +1,19 @@
+# Admin UI ClusterIP Service
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: admin-ui
+  namespace: apps
+  labels:
+    app: admin-ui
+    env: shared
+spec:
+  type: ClusterIP
+  selector:
+    app: admin-ui
+    env: shared
+  ports:
+    - port: 3100
+      targetPort: 3100
+      protocol: TCP

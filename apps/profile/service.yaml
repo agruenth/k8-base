@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: profile
+  namespace: apps
+  labels:
+    app: profile
+spec:
+  type: ClusterIP
+  selector:
+    app: profile
+  ports:
+    - port: 3021
+      targetPort: 3021
+      protocol: TCP

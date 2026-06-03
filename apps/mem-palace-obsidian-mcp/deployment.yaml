@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mem-palace-obsidian-mcp
+  namespace: apps
+  labels:
+    app: mem-palace-obsidian-mcp
+    env: exp
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: mem-palace-obsidian-mcp
+  template:
+    metadata:
+      labels:
+        app: mem-palace-obsidian-mcp
+        env: exp
+    spec:
+      containers:
+        - name: mem-palace-obsidian-mcp
+          image: registry.localhost:5000/mem-palace-obsidian-mcp:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 3029
+          env:
+            - name: PORT
+              value: "3029"
+            - name: MCP_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: mem-palace-obsidian-mcp-secrets
+                  key: api-key
+            - name: MCP_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: mem-palace-obsidian-mcp-secrets
+                  key: client-id
+          resources:
+            requests:
+              memory: "48Mi"
+              cpu: "20m"
+            limits:
+              memory: "128Mi"
+              cpu: "200m"
+          readinessProbe:
+            httpGet:
+              port: 3029
+              path: /health
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              port: 3029
+              path: /health
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          volumeMounts:
+            - name: vault
+              mountPath: /vault
+      volumes:
+        - name: vault
+          hostPath:
+            path: /REPOS_PRIVAT/obsidian-data
+            type: Directory

@@ -1,0 +1,67 @@
+# Admin UI Deployment
+# Manages K8s services (start/stop) and links to Grafana logs.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: admin-ui
+  namespace: apps
+  labels:
+    app: admin-ui
+    env: shared
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: admin-ui
+      env: shared
+  template:
+    metadata:
+      labels:
+        app: admin-ui
+        env: shared
+    spec:
+      serviceAccountName: admin-ui
+      containers:
+        - name: admin-ui
+          imagePullPolicy: Never
+          image: registry.localhost:5000/admin-ui:v3-env
+          ports:
+            - containerPort: 3100
+              protocol: TCP
+          env:
+            - name: K8S_NAMESPACE
+              value: "apps"
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "20m"
+            limits:
+              memory: "192Mi"
+              cpu: "200m"
+          readinessProbe:
+            httpGet:
+              port: 3100
+              path: /admin/
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              port: 3100
+              path: /admin/
+            initialDelaySeconds: 5
+            periodSeconds: 30
+          volumeMounts:
+            - name: repos
+              mountPath: /REPOS_PRIVAT
+            - name: claude-home
+              mountPath: /home/claude_worker
+      volumes:
+        - name: repos
+          hostPath:
+            path: /REPOS_PRIVAT
+            type: Directory
+        - name: claude-home
+          hostPath:
+            path: /home/claude_worker
+            type: Directory

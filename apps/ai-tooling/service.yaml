@@ -1,0 +1,19 @@
+# AI Tooling ClusterIP Service
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-tooling
+  namespace: apps
+  labels:
+    app: ai-tooling
+    env: exp
+spec:
+  type: ClusterIP
+  selector:
+    app: ai-tooling
+    env: exp
+  ports:
+    - port: 3005
+      targetPort: 3005
+      protocol: TCP

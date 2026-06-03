@@ -1,0 +1,36 @@
+###############################################################
+# Authelia Users Database
+# To add/remove users, edit this file and restart authelia:
+#   kubectl create configmap authelia-users -n authelia --from-file=users.yaml=users.yaml --dry-run=client -o yaml | kubectl apply -f -
+#   kubectl rollout restart deployment authelia -n authelia
+#
+# Password hashes are generated automatically by the admin UI (argon2id).
+###############################################################
+users:
+  admin:
+    displayname: "Admin"
+    password: "$argon2id$v=19$m=65536,t=3,p=4$n3OjvsY8O4Z9B4RdfCv3Gw$eqD/ZQkRxlzULZC0RVxU3WfTRs4Hwduoh8je5NTSYNg"
+    email: admin@local
+    groups:
+      - admins
+
+  mhp_user:
+    displayname: "MHP User"
+    password: "$argon2id$v=19$m=65536,t=3,p=4$MBskhUS99FxTaguvp21WVQ$32umb8vdt8UFnJhuzblzlY8HgEXYxBivAZXBiFl43zk"
+    email: mhp@local
+    groups:
+      - users
+
+  kai_schmid:
+    displayname: "Kai"
+    password: "$argon2id$v=19$m=65536,t=3,p=4$4QgEt9S+/PhKiI280qIBJw$KHn0QmLPQorhzsW/vOJ1WQgRsYVgqnE8Bxpa+JrYblY"
+    email: asdhjlfhj@dsjf.de
+    groups:
+      - users
+
+  e2e_test:
+    displayname: "E2E Test"
+    password: "$argon2id$v=19$m=65536,t=3,p=4$q8YAMwtWQ5DHYHuTRin8kw$t6UKaJvdpVa+9IK/GSSb0v90gVwjnkloYAen1oo0XJM"
+    email: e2e@test.local
+    groups:
+      - users

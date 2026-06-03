@@ -1,0 +1,19 @@
+# K8s Service Template
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: <APP_NAME>
+  namespace: apps
+  labels:
+    app: <APP_NAME>
+    env: <ENV>
+spec:
+  type: ClusterIP
+  selector:
+    app: <APP_NAME>
+    env: <ENV>
+  ports:
+    - port: <PORT>
+      targetPort: <PORT>
+      protocol: TCP

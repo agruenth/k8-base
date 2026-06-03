@@ -1,0 +1,17 @@
+# Eden PersistentVolumeClaim
+# Stores SQLite database files.
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: eden-data
+  namespace: apps
+  labels:
+    app: eden
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 1Gi

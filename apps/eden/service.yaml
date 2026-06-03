@@ -1,0 +1,19 @@
+# Eden ClusterIP Service
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: eden
+  namespace: apps
+  labels:
+    app: eden
+    env: exp
+spec:
+  type: ClusterIP
+  selector:
+    app: eden
+    env: exp
+  ports:
+    - port: 3002
+      targetPort: 3002
+      protocol: TCP

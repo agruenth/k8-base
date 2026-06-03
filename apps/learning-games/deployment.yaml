@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: learning-games
+  namespace: apps
+  labels:
+    app: learning-games
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: learning-games
+  template:
+    metadata:
+      labels:
+        app: learning-games
+    spec:
+      containers:
+        - name: learning-games
+          imagePullPolicy: Never
+          image: registry.localhost:5000/learning-games:latest
+          ports:
+            - containerPort: 3025
+              protocol: TCP
+          command: ["npm", "start", "--", "--port", "3025"]
+          env:
+            - name: APP_NAME
+              value: "learning-games"
+            - name: NODE_ENV
+              value: "production"
+            - name: LOG_LEVEL
+              value: "info"
+            - name: GROQ_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: GROQ_API_KEY
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "20m"
+            limits:
+              memory: "192Mi"
+              cpu: "200m"
+          readinessProbe:
+            httpGet:
+              port: 3025
+              path: /
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              port: 3025
+              path: /
+            initialDelaySeconds: 10
+            periodSeconds: 30

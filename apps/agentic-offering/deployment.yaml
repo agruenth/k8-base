@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agentic-offering
+  namespace: apps
+  labels:
+    app: agentic-offering
+    env: exp
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: agentic-offering
+      env: exp
+  template:
+    metadata:
+      labels:
+        app: agentic-offering
+        env: exp
+    spec:
+      containers:
+        - name: agentic-offering
+          image: registry.localhost:5000/agentic-offering:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 3020
+          command: ["npm", "start", "--", "--port", "3020"]
+          env:
+            - name: APP_NAME
+              value: "agentic-offering"
+            - name: NODE_ENV
+              value: "production"
+            - name: LOG_LEVEL
+              value: "info"
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "20m"
+            limits:
+              memory: "192Mi"
+              cpu: "200m"
+          readinessProbe:
+            httpGet:
+              port: 3020
+              path: /
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              port: 3020
+              path: /
+            initialDelaySeconds: 10
+            periodSeconds: 30

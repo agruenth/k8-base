@@ -1,0 +1,24 @@
+# Caddy Service
+# With hostPort on the deployment, traffic reaches the pod directly.
+# This ClusterIP service allows internal k8s services to reach Caddy if needed.
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: caddy
+  namespace: caddy-system
+  labels:
+    app: caddy
+spec:
+  type: ClusterIP
+  selector:
+    app: caddy
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+      protocol: TCP
+    - name: https
+      port: 443
+      targetPort: 443
+      protocol: TCP

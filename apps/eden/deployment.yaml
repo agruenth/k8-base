@@ -1,0 +1,73 @@
+# Eden Deployment
+# Single-replica app with SQLite persistence.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eden
+  namespace: apps
+  labels:
+    app: eden
+    env: exp
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: eden
+      env: exp
+  template:
+    metadata:
+      labels:
+        app: eden
+        env: exp
+    spec:
+      containers:
+        - name: eden
+          image: registry.localhost:5000/eden:v2
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 3002
+              protocol: TCP
+          env:
+            - name: DATABASE_URL
+              value: "file://eden.db"
+            - name: EDEN_CONTENT_ROOT
+              value: "/content"
+            - name: APP_NAME
+              value: "eden"
+            - name: LOG_LEVEL
+              value: "debug"
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+            - name: content
+              mountPath: /content
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "20m"
+            limits:
+              memory: "192Mi"
+              cpu: "200m"
+          readinessProbe:
+            httpGet:
+              port: 3002
+              path: /
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              port: 3002
+              path: /
+            initialDelaySeconds: 10
+            periodSeconds: 30
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: eden-data
+        - name: content
+          hostPath:
+            path: /REPOS_PRIVAT/EDEN
+            type: Directory

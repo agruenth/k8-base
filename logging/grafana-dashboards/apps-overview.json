@@ -1,0 +1,297 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "description": "Overview of application logs collected via Loki - volume, error rates, and per-service filtering.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "title": "Service Filter",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "title": "Total Log Volume (all services)",
+      "description": "Log lines per minute across all services",
+      "type": "timeseries",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 1 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 30,
+            "stacking": { "mode": "normal" }
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "right", "calcs": ["sum"] },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        {
+          "expr": "sum by (app) (count_over_time({namespace=\"apps\", app=~\"$service\"} [1m]))",
+          "legendFormat": "{{ app }}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Log Volume - checkmate",
+      "type": "timeseries",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 9 },
+      "fieldConfig": {
+        "defaults": { "color": { "fixedColor": "blue", "mode": "fixed" }, "unit": "short" },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "sum(count_over_time({namespace=\"apps\", app=\"checkmate\"} [1m]))",
+          "legendFormat": "checkmate",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Log Volume - wandermind",
+      "type": "timeseries",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 9 },
+      "fieldConfig": {
+        "defaults": { "color": { "fixedColor": "green", "mode": "fixed" }, "unit": "short" },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "sum(count_over_time({namespace=\"apps\", app=\"wandermind\"} [1m]))",
+          "legendFormat": "wandermind",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Log Volume - eden",
+      "type": "timeseries",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 9 },
+      "fieldConfig": {
+        "defaults": { "color": { "fixedColor": "purple", "mode": "fixed" }, "unit": "short" },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "sum(count_over_time({namespace=\"apps\", app=\"eden\"} [1m]))",
+          "legendFormat": "eden",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Log Volume - req-helper",
+      "type": "timeseries",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 15 },
+      "fieldConfig": {
+        "defaults": { "color": { "fixedColor": "orange", "mode": "fixed" }, "unit": "short" },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "sum(count_over_time({namespace=\"apps\", app=\"req-helper\"} [1m]))",
+          "legendFormat": "req-helper",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Log Volume - master-agent",
+      "type": "timeseries",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 15 },
+      "fieldConfig": {
+        "defaults": { "color": { "fixedColor": "yellow", "mode": "fixed" }, "unit": "short" },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "sum(count_over_time({namespace=\"apps\", app=\"master-agent\"} [1m]))",
+          "legendFormat": "master-agent",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Log Volume - ai-tooling",
+      "type": "timeseries",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 15 },
+      "fieldConfig": {
+        "defaults": { "color": { "fixedColor": "semi-dark-red", "mode": "fixed" }, "unit": "short" },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "sum(count_over_time({namespace=\"apps\", app=\"ai-tooling\"} [1m]))",
+          "legendFormat": "ai-tooling",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Log Volume - munchkin-td",
+      "type": "timeseries",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 21 },
+      "fieldConfig": {
+        "defaults": { "color": { "fixedColor": "dark-blue", "mode": "fixed" }, "unit": "short" },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "sum(count_over_time({namespace=\"apps\", app=\"munchkin-td\"} [1m]))",
+          "legendFormat": "munchkin-td",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Log Volume - citizen-dev",
+      "type": "timeseries",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 21 },
+      "fieldConfig": {
+        "defaults": { "color": { "fixedColor": "dark-green", "mode": "fixed" }, "unit": "short" },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "sum(count_over_time({namespace=\"apps\", app=\"citizen-dev\"} [1m]))",
+          "legendFormat": "citizen-dev",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Log Volume - admin-ui",
+      "type": "timeseries",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 21 },
+      "fieldConfig": {
+        "defaults": { "color": { "fixedColor": "dark-purple", "mode": "fixed" }, "unit": "short" },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "sum(count_over_time({namespace=\"apps\", app=\"admin-ui\"} [1m]))",
+          "legendFormat": "admin-ui",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Error Rate (all services)",
+      "description": "Lines containing 'error' or 'ERROR' per minute, grouped by service",
+      "type": "timeseries",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 27 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 50,
+            "stacking": { "mode": "normal" }
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "right", "calcs": ["sum"] },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        {
+          "expr": "sum by (app) (count_over_time({namespace=\"apps\", app=~\"$service\"} |~ \"(?i)error\" [1m]))",
+          "legendFormat": "{{ app }}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Live Log Stream",
+      "description": "Tail logs for the selected service",
+      "type": "logs",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 35 },
+      "options": {
+        "showTime": true,
+        "showLabels": true,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": false,
+        "enableLogDetails": true,
+        "sortOrder": "Descending",
+        "dedupStrategy": "none"
+      },
+      "targets": [
+        {
+          "expr": "{namespace=\"apps\", app=~\"$service\"}",
+          "refId": "A"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["apps", "loki", "overview"],
+  "templating": {
+    "list": [
+      {
+        "name": "service",
+        "type": "custom",
+        "label": "Service",
+        "description": "Filter by application service name",
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": ".*"
+        },
+        "options": [
+          { "selected": true,  "text": "All",            "value": ".*" },
+          { "selected": false, "text": "checkmate",      "value": "checkmate" },
+          { "selected": false, "text": "wandermind",     "value": "wandermind" },
+          { "selected": false, "text": "eden",           "value": "eden" },
+          { "selected": false, "text": "req-helper",     "value": "req-helper" },
+          { "selected": false, "text": "master-agent",   "value": "master-agent" },
+          { "selected": false, "text": "ai-tooling",     "value": "ai-tooling" },
+          { "selected": false, "text": "munchkin-td",    "value": "munchkin-td" },
+          { "selected": false, "text": "citizen-dev",    "value": "citizen-dev" },
+          { "selected": false, "text": "admin-ui",       "value": "admin-ui" }
+        ],
+        "query": "",
+        "includeAll": false,
+        "multi": false
+      }
+    ]
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Apps Overview",
+  "uid": "apps-overview",
+  "version": 1
+}

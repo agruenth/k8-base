@@ -1,0 +1,75 @@
+# ══════════════════════════════════════════════════════════════════════════════
+#  Caddy Reverse Proxy — Template for Multi-App Gateway
+# ══════════════════════════════════════════════════════════════════════════════
+#
+#  This file is a LOCAL DEVELOPMENT helper only.
+#  In production, routes are added to the centralized Caddy ConfigMap:
+#    /REPOS_PRIVAT/k8s/caddy-system/configmap.yaml
+#
+#  See "K8s Caddy Route Snippet" below for the production pattern.
+#
+# ══════════════════════════════════════════════════════════════════════════════
+
+# ── Local development ──────────────────────────────────────────────────────
+#
+# Run locally with: caddy run --config Caddyfile.template
+# Requires Caddy installed: https://caddyserver.com/docs/install
+#
+localhost {
+	tls internal
+
+	header {
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	handle_errors {
+		respond "{err.status_code} {err.status_text}"
+	}
+
+	request_body {
+		max_size 100MB
+	}
+
+	handle /exp/my-app* {
+		reverse_proxy localhost:3010
+	}
+
+	handle / {
+		redir /exp/my-app/ 308
+	}
+
+	handle {
+		respond "No matching route" 404
+	}
+}
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  K8s Caddy Route Snippet (PRODUCTION)
+# ══════════════════════════════════════════════════════════════════════════════
+#
+#  Add this block to the `:443` server in:
+#    /REPOS_PRIVAT/k8s/caddy-system/configmap.yaml
+#
+#  The centralized Caddyfile already defines these reusable snippets:
+#
+#    (authelia)   — forward_auth to Authelia, copies Remote-User/Groups/Name/Email
+#    (app_route)  — auth + strip prefix + reverse_proxy (args: prefix, backend)
+#
+#  All apps use the same routing pattern with environment prefix:
+#
+#  ── Experimental ─────────────────────────────────────────────────────────
+#
+#      handle /exp/<APP_NAME>* {
+#        import app_route /exp/<APP_NAME> <APP_NAME>.apps.svc.cluster.local:<PORT>
+#      }
+#
+#  ── Production ───────────────────────────────────────────────────────────
+#
+#      handle /prod/<APP_NAME>* {
+#        import app_route /prod/<APP_NAME> <APP_NAME>-prod.apps.svc.cluster.local:<PORT>
+#      }
+#
+# ══════════════════════════════════════════════════════════════════════════════

@@ -1,0 +1,25 @@
+# Kubernetes Namespaces
+# - caddy-system: Reverse proxy / ingress layer
+# - apps: All application workloads
+# - logging: Loki + Promtail + Grafana observability stack
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: caddy-system
+  labels:
+    app.kubernetes.io/part-of: infrastructure
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: apps
+  labels:
+    app.kubernetes.io/part-of: workloads
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: logging
+  labels:
+    app.kubernetes.io/part-of: observability

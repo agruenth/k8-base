@@ -1,0 +1,56 @@
+# PoliSim Deployment
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: polisim
+  namespace: apps
+  labels:
+    app: polisim
+    env: exp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: polisim
+      env: exp
+  template:
+    metadata:
+      labels:
+        app: polisim
+        env: exp
+    spec:
+      containers:
+        - name: polisim
+          imagePullPolicy: Never
+          image: registry.localhost:5000/polisim:latest
+          ports:
+            - containerPort: 3008
+              protocol: TCP
+          command: ["npm", "start", "--", "--port", "3008"]
+          env:
+            - name: APP_NAME
+              value: "polisim"
+            - name: NODE_ENV
+              value: "production"
+            - name: LOG_LEVEL
+              value: "info"
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "20m"
+            limits:
+              memory: "192Mi"
+              cpu: "200m"
+          readinessProbe:
+            httpGet:
+              port: 3008
+              path: /
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              port: 3008
+              path: /
+            initialDelaySeconds: 10
+            periodSeconds: 30

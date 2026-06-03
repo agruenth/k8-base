@@ -1,0 +1,14 @@
+# PersistentVolumeClaim Template (for apps using SQLite / Prisma)
+# Only needed if the app persists data. Uncomment volume/volumeMounts in deployment.yaml.
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: <APP_NAME>-data
+  namespace: apps
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 1Gi

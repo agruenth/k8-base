@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: baufi
+  namespace: apps
+  labels:
+    app: baufi
+    env: exp
+spec:
+  type: ClusterIP
+  selector:
+    app: baufi
+    env: exp
+  ports:
+    - port: 3028
+      targetPort: 3028
+      protocol: TCP

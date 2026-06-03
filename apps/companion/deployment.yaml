@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pensive
+  namespace: apps
+  labels:
+    app: pensive
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: pensive
+  template:
+    metadata:
+      labels:
+        app: pensive
+    spec:
+      containers:
+        - name: pensive
+          imagePullPolicy: Never
+          image: registry.localhost:5000/pensive:latest
+          ports:
+            - containerPort: 3026
+              hostPort: 3026
+              protocol: TCP
+          env:
+            - name: APP_NAME
+              value: "pensive"
+            - name: NODE_ENV
+              value: "production"
+            - name: LOG_LEVEL
+              value: "info"
+            - name: NEXT_PUBLIC_BASE_PATH
+              value: "/exp/pensive"
+            - name: PUBLIC_URL
+              value: "https://adrian-gruenther.de"
+            - name: DATABASE_URL
+              value: "file:/data/companion.db"
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: companion-secrets
+                  key: ANTHROPIC_API_KEY
+                  optional: true
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: companion-secrets
+                  key: OPENAI_API_KEY
+                  optional: true
+            - name: GROQ_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: companion-secrets
+                  key: GROQ_API_KEY
+                  optional: true
+          volumeMounts:
+            - name: db-data
+              mountPath: /data
+          resources:
+            requests:
+              memory: "96Mi"
+              cpu: "20m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          readinessProbe:
+            httpGet:
+              port: 3026
+              path: /
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              port: 3026
+              path: /
+            initialDelaySeconds: 30
+            periodSeconds: 30
+      volumes:
+        - name: db-data
+          persistentVolumeClaim:
+            claimName: companion-db

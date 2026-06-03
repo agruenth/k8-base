@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: baufi
+  namespace: apps
+  labels:
+    app: baufi
+    env: exp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: baufi
+      env: exp
+  template:
+    metadata:
+      labels:
+        app: baufi
+        env: exp
+    spec:
+      containers:
+        - name: baufi
+          image: registry.localhost:5000/baufi:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 3028
+          resources:
+            requests:
+              memory: "32Mi"
+              cpu: "10m"
+            limits:
+              memory: "64Mi"
+              cpu: "50m"
+          readinessProbe:
+            httpGet:
+              port: 3028
+              path: /
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              port: 3028
+              path: /
+            initialDelaySeconds: 5
+            periodSeconds: 30

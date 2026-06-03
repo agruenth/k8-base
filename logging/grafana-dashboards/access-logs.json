@@ -1,0 +1,231 @@
+{
+  "annotations": { "list": [] },
+  "description": "HTTP access logs from Caddy reverse proxy — requests per service, status codes, and live access stream.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "title": "Requests per Service",
+      "description": "HTTP requests per minute grouped by service path",
+      "type": "timeseries",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "bars", "fillOpacity": 30, "stacking": { "mode": "normal" } },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "right", "calcs": ["sum"] },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        {
+          "expr": "sum by (service) (count_over_time({app=\"caddy\"} | json | service=~\"$service\" | request_method=~\"$method\" [1m]))",
+          "legendFormat": "{{ service }}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Status Codes",
+      "description": "HTTP response status codes per minute",
+      "type": "timeseries",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "bars", "fillOpacity": 40, "stacking": { "mode": "normal" } },
+          "unit": "short"
+        },
+        "overrides": [
+          { "matcher": { "id": "byRegexp", "options": "^2" }, "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }] },
+          { "matcher": { "id": "byRegexp", "options": "^3" }, "properties": [{ "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } }] },
+          { "matcher": { "id": "byRegexp", "options": "^4" }, "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }] },
+          { "matcher": { "id": "byRegexp", "options": "^5" }, "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }] }
+        ]
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "right", "calcs": ["sum"] },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        {
+          "expr": "sum by (status) (count_over_time({app=\"caddy\"} | json | service=~\"$service\" | request_method=~\"$method\" [1m]))",
+          "legendFormat": "{{ status }}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Errors (4xx / 5xx)",
+      "description": "Client and server errors per minute by service",
+      "type": "timeseries",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "bars", "fillOpacity": 40, "stacking": { "mode": "normal" } },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "right", "calcs": ["sum"] },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        {
+          "expr": "sum by (service) (count_over_time({app=\"caddy\"} | json | status=~\"[45].*\" | service=~\"$service\" [1m]))",
+          "legendFormat": "{{ service }}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Top Requested Paths",
+      "description": "Most frequently accessed URI paths",
+      "type": "table",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "options": {
+        "showHeader": true,
+        "sortBy": [{ "displayName": "Count", "desc": true }]
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Value" }, "properties": [{ "id": "displayName", "value": "Count" }] }
+        ]
+      },
+      "targets": [
+        {
+          "expr": "topk(20, sum by (request_uri) (count_over_time({app=\"caddy\"} | json | service=~\"$service\" | request_method=~\"$method\" [$__range])))",
+          "legendFormat": "{{ request_uri }}",
+          "refId": "A",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "title": "Unique Visitors (by IP)",
+      "description": "Distinct client IPs per minute",
+      "type": "stat",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 4, "w": 12, "x": 12, "y": 16 },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "green", "value": null }] } },
+        "overrides": []
+      },
+      "options": { "graphMode": "area", "textMode": "auto", "colorMode": "value" },
+      "targets": [
+        {
+          "expr": "count(sum by (remote_ip) (count_over_time({app=\"caddy\"} | json | service=~\"$service\" [$__range])))",
+          "legendFormat": "unique IPs",
+          "refId": "A",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "title": "Total Requests",
+      "description": "Total requests in selected time range",
+      "type": "stat",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 4, "w": 12, "x": 12, "y": 20 },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "blue", "value": null }] } },
+        "overrides": []
+      },
+      "options": { "graphMode": "none", "textMode": "auto", "colorMode": "value" },
+      "targets": [
+        {
+          "expr": "sum(count_over_time({app=\"caddy\"} | json | service=~\"$service\" | request_method=~\"$method\" [$__range]))",
+          "legendFormat": "requests",
+          "refId": "A",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "title": "Access Log Stream",
+      "description": "Live access logs from Caddy",
+      "type": "logs",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 12, "w": 24, "x": 0, "y": 24 },
+      "options": {
+        "showTime": true,
+        "showLabels": true,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending",
+        "dedupStrategy": "none"
+      },
+      "targets": [
+        {
+          "expr": "{app=\"caddy\"} | json | service=~\"$service\" | request_method=~\"$method\"",
+          "refId": "A"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["access-logs", "caddy", "loki"],
+  "templating": {
+    "list": [
+      {
+        "name": "service",
+        "type": "custom",
+        "label": "Service",
+        "current": { "selected": true, "text": "All", "value": ".+" },
+        "options": [
+          { "selected": true,  "text": "All",              "value": ".+" },
+          { "selected": false, "text": "checkmate",        "value": "checkmate" },
+          { "selected": false, "text": "wandermind",       "value": "wandermind" },
+          { "selected": false, "text": "eden",             "value": "eden" },
+          { "selected": false, "text": "requirement_helper","value": "requirement_helper" },
+          { "selected": false, "text": "master-agent",     "value": "master-agent" },
+          { "selected": false, "text": "ai-tooling",       "value": "ai-tooling" },
+          { "selected": false, "text": "munchkin-td",      "value": "munchkin-td" },
+          { "selected": false, "text": "citizen-dev",      "value": "citizen-dev" },
+          { "selected": false, "text": "grafana",          "value": "grafana" },
+          { "selected": false, "text": "admin",            "value": "admin" },
+          { "selected": false, "text": "authelia",         "value": "authelia" }
+        ],
+        "includeAll": false,
+        "multi": false
+      },
+      {
+        "name": "method",
+        "type": "custom",
+        "label": "Method",
+        "current": { "selected": true, "text": "All", "value": ".+" },
+        "options": [
+          { "selected": true,  "text": "All",    "value": ".+" },
+          { "selected": false, "text": "GET",    "value": "GET" },
+          { "selected": false, "text": "POST",   "value": "POST" },
+          { "selected": false, "text": "PUT",    "value": "PUT" },
+          { "selected": false, "text": "DELETE", "value": "DELETE" }
+        ],
+        "includeAll": false,
+        "multi": false
+      }
+    ]
+  },
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Access Logs",
+  "uid": "access-logs",
+  "version": 1
+}

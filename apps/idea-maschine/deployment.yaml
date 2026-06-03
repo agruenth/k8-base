@@ -1,0 +1,77 @@
+# Idea Maschine Deployment
+# Single-replica app with SQLite persistence.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: idea-maschine
+  namespace: apps
+  labels:
+    app: idea-maschine
+    env: exp
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: idea-maschine
+      env: exp
+  template:
+    metadata:
+      labels:
+        app: idea-maschine
+        env: exp
+    spec:
+      initContainers:
+        - name: init-db
+          image: registry.localhost:5000/idea-maschine:latest
+          imagePullPolicy: Never
+          command: ["sh", "-c", "cd /app && npx prisma db push --accept-data-loss 2>&1 || true"]
+          env:
+            - name: DATABASE_URL
+              value: "file://dev.db"
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+      containers:
+        - name: idea-maschine
+          image: registry.localhost:5000/idea-maschine:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 3022
+              protocol: TCP
+          env:
+            - name: DATABASE_URL
+              value: "file://dev.db"
+            - name: GROQ_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: GROQ_API_KEY
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "20m"
+            limits:
+              memory: "192Mi"
+              cpu: "200m"
+          readinessProbe:
+            httpGet:
+              port: 3022
+              path: /
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              port: 3022
+              path: /
+            initialDelaySeconds: 10
+            periodSeconds: 30
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: idea-maschine-data

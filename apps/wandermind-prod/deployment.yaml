@@ -1,0 +1,91 @@
+# Wandermind-Prod Deployment
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wandermind-prod
+  namespace: apps
+  labels:
+    app: wandermind-prod
+    env: prod
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: wandermind-prod
+      env: prod
+  template:
+    metadata:
+      labels:
+        app: wandermind-prod
+        env: prod
+    spec:
+      initContainers:
+        - name: init-db
+          image: registry.localhost:5000/wandermind-prod:latest
+          imagePullPolicy: Never
+          command:
+            - sh
+            - -c
+            - |
+              cd /app
+              if [ -f /pvc/dev.db ]; then
+                echo "[init] PVC database exists — running migrations only"
+                DATABASE_URL="file:///pvc/dev.db" npx prisma migrate deploy 2>&1 || \
+                DATABASE_URL="file:///pvc/dev.db" npx prisma db push --accept-data-loss 2>&1 || true
+              elif [ -s /app/dev.db.seed ]; then
+                echo "[init] No PVC database — copying baked-in local db"
+                cp /app/dev.db.seed /pvc/dev.db
+                DATABASE_URL="file:///pvc/dev.db" npx prisma migrate deploy 2>&1 || \
+                DATABASE_URL="file:///pvc/dev.db" npx prisma db push --accept-data-loss 2>&1 || true
+              else
+                echo "[init] No PVC database, no baked-in db — running migrations + seed"
+                DATABASE_URL="file:///pvc/dev.db" npx prisma migrate deploy 2>&1 || \
+                DATABASE_URL="file:///pvc/dev.db" npx prisma db push --accept-data-loss 2>&1 || true
+                DATABASE_URL="file:///pvc/dev.db" node prisma/seed.mjs 2>&1 || true
+              fi
+          volumeMounts:
+            - name: data
+              mountPath: /pvc
+      containers:
+        - name: wandermind-prod
+          image: registry.localhost:5000/wandermind-prod:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 3001
+          env:
+            - name: GROQ_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: GROQ_API_KEY
+            - name: DATABASE_URL
+              value: "file:///pvc/dev.db"
+          volumeMounts:
+            - name: data
+              mountPath: /pvc
+          resources:
+            requests:
+              memory: "160Mi"
+              cpu: "50m"
+            limits:
+              memory: "320Mi"
+              cpu: "300m"
+          readinessProbe:
+            httpGet:
+              port: 3001
+              path: /
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              port: 3001
+              path: /
+            initialDelaySeconds: 20
+            periodSeconds: 30
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: wandermind-prod-data

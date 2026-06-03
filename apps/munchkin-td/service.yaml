@@ -1,0 +1,19 @@
+# Munchkin TD ClusterIP Service
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: munchkin-td
+  namespace: apps
+  labels:
+    app: munchkin-td
+    env: exp
+spec:
+  type: ClusterIP
+  selector:
+    app: munchkin-td
+    env: exp
+  ports:
+    - port: 3006
+      targetPort: 3006
+      protocol: TCP

@@ -1,0 +1,91 @@
+# Master Agent Deployment
+# Sidecar pattern: frontend (port 3004) + backend (port 5001) in one pod.
+# The backend is only reachable within the pod via localhost:5001.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: master-agent
+  namespace: apps
+  labels:
+    app: master-agent
+    env: exp
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: master-agent
+      env: exp
+  template:
+    metadata:
+      labels:
+        app: master-agent
+        env: exp
+    spec:
+      containers:
+        # Frontend container - serves the UI
+        - name: frontend
+          imagePullPolicy: Never
+          image: registry.localhost:5000/master-agent-frontend:latest
+          ports:
+            - name: frontend
+              containerPort: 3004
+              protocol: TCP
+          env:
+            - name: BACKEND_URL
+              value: "http://localhost:5001"
+          resources:
+            requests:
+              memory: "80Mi"
+              cpu: "20m"
+            limits:
+              memory: "192Mi"
+              cpu: "200m"
+          readinessProbe:
+            httpGet:
+              port: 3004
+              path: /
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              port: 3004
+              path: /
+            initialDelaySeconds: 10
+            periodSeconds: 30
+
+        # Backend sidecar container - handles API requests
+        - name: backend
+          imagePullPolicy: Never
+          image: registry.localhost:5000/master-agent-backend:latest
+          ports:
+            - name: backend
+              containerPort: 5001
+              protocol: TCP
+          env:
+            - name: GROQ_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: GROQ_API_KEY
+          resources:
+            requests:
+              memory: "80Mi"
+              cpu: "20m"
+            limits:
+              memory: "192Mi"
+              cpu: "200m"
+          readinessProbe:
+            httpGet:
+              port: 5001
+              path: /health
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              port: 5001
+              path: /health
+            initialDelaySeconds: 10
+            periodSeconds: 30

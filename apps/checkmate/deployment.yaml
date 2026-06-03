@@ -1,0 +1,82 @@
+# Checkmate Deployment
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: checkmate
+  namespace: apps
+  labels:
+    app: checkmate
+    env: exp
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: checkmate
+      env: exp
+  template:
+    metadata:
+      labels:
+        app: checkmate
+        env: exp
+    spec:
+      initContainers:
+        - name: init-db
+          image: registry.localhost:5000/checkmate:latest
+          imagePullPolicy: Never
+          command:
+            - sh
+            - -c
+            - |
+              mkdir -p /pvc/checklists
+              cd /app
+              DATABASE_URL="file:///pvc/dev.db" npx prisma migrate deploy 2>&1 || \
+              DATABASE_URL="file:///pvc/dev.db" npx prisma db push --accept-data-loss 2>&1 || true
+          volumeMounts:
+            - name: data
+              mountPath: /pvc
+      containers:
+        - name: checkmate
+          image: registry.localhost:5000/checkmate:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 3000
+          env:
+            - name: DATABASE_URL
+              value: "file:///pvc/dev.db"
+          command:
+            - sh
+            - -c
+            - |
+              mkdir -p /app/data/checklists
+              # Copy DB from PVC to /app/dev.db (lib/prisma.ts uses path.join(cwd, "dev.db"))
+              cp /pvc/dev.db /app/dev.db 2>/dev/null || true
+              exec npm start
+          volumeMounts:
+            - name: data
+              mountPath: /pvc
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "20m"
+            limits:
+              memory: "192Mi"
+              cpu: "200m"
+          readinessProbe:
+            httpGet:
+              port: 3000
+              path: /
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              port: 3000
+              path: /
+            initialDelaySeconds: 20
+            periodSeconds: 30
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: checkmate-data

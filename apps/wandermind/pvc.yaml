@@ -1,0 +1,17 @@
+# Wandermind PersistentVolumeClaim
+# Stores SQLite database files.
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: wandermind-data
+  namespace: apps
+  labels:
+    app: wandermind
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 1Gi

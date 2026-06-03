@@ -1,0 +1,86 @@
+# Helm values for Loki (grafana/loki chart)
+# Install: helm install loki grafana/loki -n logging -f loki-values.yaml
+#
+# Single-replica mode suitable for a single-node cluster.
+---
+# Run in single-binary (monolithic) mode
+deploymentMode: SingleBinary
+
+singleBinary:
+  replicas: 1
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "250m"
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClass: local-path
+
+# Loki configuration overrides
+loki:
+  # Disable multi-tenancy for simplicity
+  auth_enabled: false
+
+  commonConfig:
+    replication_factor: 1
+
+  storage:
+    type: filesystem
+
+  # Required schema config
+  schemaConfig:
+    configs:
+      - from: "2024-01-01"
+        store: tsdb
+        object_store: filesystem
+        schema: v13
+        index:
+          prefix: index_
+          period: 24h
+
+  # Retention: auto-delete logs older than 7 days
+  limits_config:
+    retention_period: 168h    # 7 days
+
+  compactor:
+    retention_enabled: true
+    working_directory: /var/loki/compactor
+    compaction_interval: 10m
+    retention_delete_delay: 2h
+    retention_delete_worker_count: 150
+    delete_request_store: filesystem
+
+# Disable components not needed in single-binary mode
+gateway:
+  enabled: false
+
+backend:
+  replicas: 0
+
+read:
+  replicas: 0
+
+write:
+  replicas: 0
+
+# Disable memcached caches — unnecessary on a single-node cluster
+chunksCache:
+  enabled: false
+
+resultsCache:
+  enabled: false
+
+# Monitoring - disable built-in to keep things lean
+monitoring:
+  selfMonitoring:
+    enabled: false
+  lokiCanary:
+    enabled: false
+
+# Disable test pod
+test:
+  enabled: false

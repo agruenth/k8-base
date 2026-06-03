@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: profile
+  namespace: apps
+  labels:
+    app: profile
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: profile
+  template:
+    metadata:
+      labels:
+        app: profile
+    spec:
+      containers:
+        - name: profile
+          imagePullPolicy: Never
+          image: registry.localhost:5000/profile:latest
+          ports:
+            - containerPort: 3021
+              protocol: TCP
+          command: ["npm", "start", "--", "--port", "3021"]
+          env:
+            - name: APP_NAME
+              value: "profile"
+            - name: NODE_ENV
+              value: "production"
+            - name: LOG_LEVEL
+              value: "info"
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "20m"
+            limits:
+              memory: "192Mi"
+              cpu: "200m"
+          readinessProbe:
+            httpGet:
+              port: 3021
+              path: /
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              port: 3021
+              path: /
+            initialDelaySeconds: 10
+            periodSeconds: 30

@@ -1,0 +1,69 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agent-onboarding-checklist
+  namespace: apps
+  labels:
+    app: agent-onboarding-checklist
+    env: exp
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: agent-onboarding-checklist
+      env: exp
+  template:
+    metadata:
+      labels:
+        app: agent-onboarding-checklist
+        env: exp
+    spec:
+      containers:
+        - name: agent-onboarding-checklist
+          image: registry.localhost:5000/agent-onboarding-checklist:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 3023
+          env:
+            - name: APP_NAME
+              value: "agent-onboarding-checklist"
+            - name: NODE_ENV
+              value: "production"
+            - name: LOG_LEVEL
+              value: "info"
+            - name: PORT
+              value: "3023"
+            - name: GROQ_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: GROQ_API_KEY
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "20m"
+            limits:
+              memory: "192Mi"
+              cpu: "200m"
+          readinessProbe:
+            httpGet:
+              port: 3023
+              path: /
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          volumeMounts:
+            - name: data
+              mountPath: /pvc
+          livenessProbe:
+            httpGet:
+              port: 3023
+              path: /
+            initialDelaySeconds: 10
+            periodSeconds: 30
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: agent-onboarding-checklist-data

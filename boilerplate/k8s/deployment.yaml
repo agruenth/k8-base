@@ -1,0 +1,106 @@
+# K8s Deployment Template
+# Replace <APP_NAME>, <PORT>, <BASE_PATH>, and <ENV> with your app's values.
+# <ENV> is "exp" for experimental or "prod" for production.
+# basePath in next.config.ts must be /<ENV>/<APP_NAME>
+# Image: registry.localhost:5000/<APP_NAME>:latest
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: <APP_NAME>
+  namespace: apps
+  labels:
+    app: <APP_NAME>
+    env: <ENV>
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: <APP_NAME>
+      env: <ENV>
+  template:
+    metadata:
+      labels:
+        app: <APP_NAME>
+        env: <ENV>
+    spec:
+      # ── Optional: Init container for Prisma migrations ──────────────
+      # Uncomment if using SQLite + Prisma
+      #
+      # initContainers:
+      #   - name: migrate
+      #     image: registry.localhost:5000/<APP_NAME>:latest
+      #     imagePullPolicy: Never
+      #     command: ["npx", "prisma", "migrate", "deploy"]
+      #     env:
+      #       - name: DATABASE_URL
+      #         value: "file:/pvc/dev.db"
+      #     volumeMounts:
+      #       - name: data
+      #         mountPath: /pvc
+
+      containers:
+        - name: <APP_NAME>
+          image: registry.localhost:5000/<APP_NAME>:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: <PORT>
+          env:
+            - name: APP_NAME
+              value: "<APP_NAME>"
+            - name: NODE_ENV
+              value: "production"
+            - name: LOG_LEVEL
+              value: "info"
+            # ── Optional: API keys from shared secret ───────────────
+            # - name: GROQ_API_KEY
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: app-secrets
+            #       key: GROQ_API_KEY
+            # - name: OPENAI_API_KEY
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: app-secrets
+            #       key: OPENAI_API_KEY
+            # - name: ANTHROPIC_API_KEY
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: app-secrets
+            #       key: ANTHROPIC_API_KEY
+            # ── Optional: SQLite path for Prisma ────────────────────
+            # - name: DATABASE_URL
+            #   value: "file:/pvc/dev.db"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+          # IMPORTANT: probe path MUST be / — Next.js with basePath serves at /
+          # when accessed directly. Caddy strips the prefix before proxying.
+          readinessProbe:
+            httpGet:
+              port: <PORT>
+              path: /
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              port: <PORT>
+              path: /
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          # ── Optional: Volume mount for persistence ────────────────
+          # volumeMounts:
+          #   - name: data
+          #     mountPath: /pvc
+
+      # ── Optional: Volume for persistence ──────────────────────────
+      # volumes:
+      #   - name: data
+      #     persistentVolumeClaim:
+      #       claimName: <APP_NAME>-data

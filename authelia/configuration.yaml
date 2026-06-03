@@ -1,0 +1,235 @@
+theme: dark
+server:
+  address: tcp://0.0.0.0:9091/authelia
+  endpoints:
+    authz:
+      forward-auth:
+        implementation: ForwardAuth
+log:
+  level: info
+  format: json
+ntp:
+  disable_startup_check: true
+identity_validation:
+  reset_password:
+    jwt_secret: '{AUTHELIA_JWT_SECRET}'
+telemetry:
+  metrics:
+    enabled: false
+totp:
+  issuer: HomeCluster
+  period: 30
+  skew: 1
+authentication_backend:
+  file:
+    path: /config/users.yaml
+    password:
+      algorithm: argon2id
+session:
+  secret: '{AUTHELIA_SESSION_SECRET}'
+  cookies:
+    - domain: adrian-gruenther.de
+      authelia_url: https://adrian-gruenther.de/authelia
+      default_redirection_url: https://adrian-gruenther.de/
+      name: authelia_session
+      same_site: lax
+      inactivity: 4h
+      expiration: 24h
+    - domain: 142.132.204.173
+      authelia_url: https://142.132.204.173/authelia
+      default_redirection_url: https://142.132.204.173/
+      name: authelia_session_ip
+      same_site: lax
+      inactivity: 4h
+      expiration: 24h
+storage:
+  encryption_key: '{AUTHELIA_STORAGE_ENCRYPTION_KEY}'
+  local:
+    path: /data/db.sqlite3
+notifier:
+  filesystem:
+    filename: /data/notifications.txt
+access_control:
+  default_policy: deny
+  rules:
+    - domain:
+        - adrian-gruenther.de
+        - 142.132.204.173
+      resources:
+        - ^/authelia([/?].*)?$
+      policy: bypass
+    - domain:
+        - adrian-gruenther.de
+        - 142.132.204.173
+      resources:
+        - ^/$
+      policy: one_factor
+      subject:
+        - group:admins
+        - group:users
+    - domain:
+        - adrian-gruenther.de
+        - 142.132.204.173
+      resources:
+        - ^/exp/checkmate([/?].*)?$
+      policy: one_factor
+      subject:
+        - group:admins
+    - domain:
+        - adrian-gruenther.de
+        - 142.132.204.173
+      resources:
+        - ^/exp/eden([/?].*)?$
+      policy: one_factor
+      subject:
+        - group:admins
+    - domain:
+        - adrian-gruenther.de
+        - 142.132.204.173
+      resources:
+        - ^/exp/requirement_helper([/?].*)?$
+      policy: one_factor
+      subject:
+        - group:admins
+    - domain:
+        - adrian-gruenther.de
+        - 142.132.204.173
+      resources:
+        - ^/exp/munchkin-td([/?].*)?$
+      policy: one_factor
+      subject:
+        - group:admins
+    - domain:
+        - adrian-gruenther.de
+        - 142.132.204.173
+      resources:
+        - ^/exp/citizen-dev([/?].*)?$
+      policy: one_factor
+      subject:
+        - group:admins
+    - domain:
+        - adrian-gruenther.de
+        - 142.132.204.173
+      resources:
+        - ^/exp/polisim([/?].*)?$
+      policy: one_factor
+      subject:
+        - group:admins
+    - domain:
+        - adrian-gruenther.de
+        - 142.132.204.173
+      resources:
+        - ^/exp/offering-agent([/?].*)?$
+      policy: one_factor
+      subject:
+        - group:admins
+    - domain:
+        - adrian-gruenther.de
+        - 142.132.204.173
+      resources:
+        - ^/exp/profile([/?].*)?$
+      policy: one_factor
+      subject:
+        - group:admins
+    - domain:
+        - adrian-gruenther.de
+        - 142.132.204.173
+      resources:
+        - ^/exp/idea-maschine([/?].*)?$
+      policy: one_factor
+      subject:
+        - group:admins
+    - domain:
+        - adrian-gruenther.de
+        - 142.132.204.173
+      resources:
+        - ^/exp/companion/\.well-known/agent\.json$
+      policy: bypass
+    - domain:
+        - adrian-gruenther.de
+        - 142.132.204.173
+      resources:
+        - ^/exp/companion([/?].*)?$
+      policy: one_factor
+      subject:
+        - group:admins
+    - domain:
+        - adrian-gruenther.de
+        - 142.132.204.173
+      resources:
+        - ^/exp/agent-onboarding-checklist([/?].*)?$
+      policy: one_factor
+      subject:
+        - group:admins
+        - group:users
+    - domain:
+        - adrian-gruenther.de
+        - 142.132.204.173
+      resources:
+        - ^/exp/learning-games([/?].*)?$
+      policy: one_factor
+      subject:
+        - group:admins
+        - group:users
+    - domain:
+        - adrian-gruenther.de
+        - 142.132.204.173
+      resources:
+        - ^/exp/wandermind([/?].*)?$
+      policy: one_factor
+      subject:
+        - group:admins
+        - group:users
+    - domain:
+        - adrian-gruenther.de
+        - 142.132.204.173
+      resources:
+        - ^/exp/master-agent([/?].*)?$
+      policy: one_factor
+      subject:
+        - group:admins
+        - group:users
+    - domain:
+        - adrian-gruenther.de
+        - 142.132.204.173
+      resources:
+        - ^/exp/ai-tooling([/?].*)?$
+      policy: one_factor
+      subject:
+        - group:admins
+        - group:users
+    - domain:
+        - adrian-gruenther.de
+        - 142.132.204.173
+      resources:
+        - ^/exp/agentic-offering([/?].*)?$
+        - ^/exp/offering-catalog([/?].*)?$
+      policy: one_factor
+      subject:
+        - group:admins
+        - group:users
+    - domain:
+        - adrian-gruenther.de
+        - 142.132.204.173
+      resources:
+        - ^/prod/wandermind([/?].*)?$
+      policy: one_factor
+      subject:
+        - group:admins
+        - group:users
+    - domain:
+        - adrian-gruenther.de
+        - 142.132.204.173
+      resources:
+        - ^/grafana([/?].*)?$
+      policy: one_factor
+      subject:
+        - group:admins
+    - domain:
+        - adrian-gruenther.de
+        - 142.132.204.173
+      resources:
+        - ^/admin([/?].*)?$
+      policy: one_factor
+      subject:
+        - group:admins

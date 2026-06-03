@@ -1,0 +1,48 @@
+# Munchkin TD Deployment
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: munchkin-td
+  namespace: apps
+  labels:
+    app: munchkin-td
+    env: exp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: munchkin-td
+      env: exp
+  template:
+    metadata:
+      labels:
+        app: munchkin-td
+        env: exp
+    spec:
+      containers:
+        - name: munchkin-td
+          imagePullPolicy: Never
+          image: registry.localhost:5000/munchkin-td:latest
+          ports:
+            - containerPort: 3006
+              protocol: TCP
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "20m"
+            limits:
+              memory: "192Mi"
+              cpu: "200m"
+          readinessProbe:
+            httpGet:
+              port: 3006
+              path: /health
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              port: 3006
+              path: /health
+            initialDelaySeconds: 10
+            periodSeconds: 30

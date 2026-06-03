@@ -1,0 +1,105 @@
+# Citizen Dev Deployment
+# Multi-container pod matching the docker-compose layout:
+#   - mock-sap:       SAP mock server (port 8090)
+#   - marimo-edit:    Marimo editor (port 8081)
+#   - marimo-run:     Marimo runtime (port 8082)
+#   - publish-portal: Main UI exposed externally (port 8083 -> service 3007)
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: citizen-dev
+  namespace: apps
+  labels:
+    app: citizen-dev
+    env: exp
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: citizen-dev
+      env: exp
+  template:
+    metadata:
+      labels:
+        app: citizen-dev
+        env: exp
+    spec:
+      containers:
+        # Mock SAP backend
+        - name: mock-sap
+          imagePullPolicy: Never
+          image: registry.localhost:5000/citizen-dev-mock-sap:latest
+          ports:
+            - name: mock-sap
+              containerPort: 8090
+              protocol: TCP
+          resources:
+            requests:
+              memory: "32Mi"
+              cpu: "10m"
+            limits:
+              memory: "96Mi"
+              cpu: "100m"
+
+        # Marimo editor
+        - name: marimo-edit
+          imagePullPolicy: Never
+          image: registry.localhost:5000/citizen-dev-edit:latest
+          ports:
+            - name: marimo-edit
+              containerPort: 8081
+              protocol: TCP
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "20m"
+            limits:
+              memory: "192Mi"
+              cpu: "200m"
+
+        # Marimo runtime
+        - name: marimo-run
+          imagePullPolicy: Never
+          image: registry.localhost:5000/citizen-dev-run:latest
+          ports:
+            - name: marimo-run
+              containerPort: 8082
+              protocol: TCP
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "20m"
+            limits:
+              memory: "192Mi"
+              cpu: "200m"
+
+        # Publish portal - main entry point exposed via Caddy
+        - name: publish-portal
+          imagePullPolicy: Never
+          image: registry.localhost:5000/citizen-dev-run:latest
+          ports:
+            - name: portal
+              containerPort: 8083
+              protocol: TCP
+          resources:
+            requests:
+              memory: "32Mi"
+              cpu: "10m"
+            limits:
+              memory: "96Mi"
+              cpu: "100m"
+          readinessProbe:
+            httpGet:
+              port: 8083
+              path: /
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              port: 8083
+              path: /
+            initialDelaySeconds: 10
+            periodSeconds: 30

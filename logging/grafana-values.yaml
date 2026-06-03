@@ -1,0 +1,78 @@
+# Helm values for Grafana (grafana/grafana chart)
+# Install: helm install grafana grafana/grafana -n logging -f grafana-values.yaml
+#
+# Served behind Caddy at /grafana/ sub-path.
+---
+# Persistence for dashboards, settings, etc.
+persistence:
+  enabled: true
+  size: 1Gi
+  storageClassName: local-path
+
+# Resource limits
+resources:
+  requests:
+    memory: "128Mi"
+    cpu: "100m"
+  limits:
+    memory: "256Mi"
+    cpu: "250m"
+
+# Grafana configuration for sub-path serving behind Caddy
+grafana.ini:
+  server:
+    root_url: "https://adrian-gruenther.de/grafana/"
+    serve_from_sub_path: true
+  security:
+    allow_embedding: true
+  auth.anonymous:
+    enabled: false
+  auth.proxy:
+    enabled: true
+    header_name: Remote-User
+    header_property: username
+    auto_sign_up: true
+  users:
+    auto_assign_org: true
+    auto_assign_org_role: Viewer
+
+# Pre-provision Loki as a datasource
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: Loki
+        uid: loki
+        type: loki
+        access: proxy
+        url: http://loki.logging.svc.cluster.local:3100
+        isDefault: true
+        editable: false
+
+# Load dashboards from ConfigMap (provisioned separately or via sidecar)
+dashboardProviders:
+  dashboardproviders.yaml:
+    apiVersion: 1
+    providers:
+      - name: default
+        orgId: 1
+        folder: ""
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards/default
+
+dashboardsConfigMaps:
+  default: grafana-dashboards
+
+securityContext:
+  runAsUser: 472
+  runAsGroup: 472
+  fsGroup: 472
+
+initChownData:
+  enabled: false
+
+# Single replica
+replicas: 1
